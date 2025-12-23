@@ -1,0 +1,73 @@
+CREATE TABLE Users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    nickname VARCHAR(20) NOT NULL,
+    profile_image_url TEXT NULL,
+    status_message VARCHAR(100) NULL,
+    role ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uk_users_email UNIQUE (email),
+    CONSTRAINT uk_users_nickname UNIQUE (nickname)
+);
+
+CREATE TABLE Diaries (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    date DATE NOT NULL,
+    author_id BIGINT NULL,
+    is_private BOOLEAN DEFAULT FALSE NOT NULL,
+    diary_likes_count BIGINT DEFAULT 0 NOT NULL,
+    view_count BIGINT DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT unique_author_date UNIQUE (author_id, date),
+    CONSTRAINT fk_diary_author FOREIGN KEY (author_id) REFERENCES Users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE Schedules (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    owner_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_schedule_owner FOREIGN KEY (owner_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE Comments (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    content TEXT NOT NULL,
+    author_id BIGINT NULL,
+    diary_id BIGINT NOT NULL,
+    parent_comment_id BIGINT NULL,
+    is_deleted BOOLEAN DEFAULT FALSE NOT NULL,
+    comment_likes_count BIGINT DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_comment_author FOREIGN KEY (author_id) REFERENCES Users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_comment_diary FOREIGN KEY (diary_id) REFERENCES Diaries(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comment_parent FOREIGN KEY (parent_comment_id) REFERENCES Comments(id) ON DELETE SET NULL
+);
+
+CREATE TABLE DiaryLikes (
+    diary_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (diary_id, user_id),
+    CONSTRAINT fk_like_diary FOREIGN KEY (diary_id) REFERENCES Diaries(id) ON DELETE CASCADE,
+    CONSTRAINT fk_like_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE CommentLikes (
+    comment_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (comment_id, user_id),
+    CONSTRAINT fk_cl_comment FOREIGN KEY (comment_id) REFERENCES Comments(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cl_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
